@@ -64,9 +64,7 @@ func (m *refCountMounter) Mount(mounts []mount.Mount, containerID string) (targe
 				if mntErr := unmount(target); mntErr != nil {
 					log.G(context.TODO()).Errorf("error unmounting %s: %v", target, mntErr)
 				}
-				if rmErr := os.Remove(target); rmErr != nil && !os.IsNotExist(rmErr) {
-					log.G(context.TODO()).Debugf("Failed to remove %s: %v: %v", target, rmErr, err)
-				}
+				removeMountArtifacts(target)
 			}
 		}
 	}()
@@ -86,9 +84,7 @@ func (m *refCountMounter) Unmount(target string) error {
 		log.G(context.TODO()).Debugf("Failed to unmount %s: %v", target, err)
 	}
 
-	if err := os.Remove(target); err != nil {
-		log.G(context.TODO()).WithError(err).WithField("dir", target).Error("failed to remove mount temp dir")
-	}
+	removeMountArtifacts(target)
 
 	return nil
 }
