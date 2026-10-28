@@ -7,6 +7,7 @@ import (
 
 	"github.com/moby/moby/v2/daemon/libnetwork/config"
 	"github.com/moby/moby/v2/daemon/libnetwork/driverapi"
+	"github.com/moby/moby/v2/daemon/libnetwork/drivers/bridge"
 	"github.com/moby/moby/v2/daemon/libnetwork/drivers/host"
 	"github.com/moby/moby/v2/daemon/libnetwork/drivers/null"
 	"github.com/moby/moby/v2/daemon/libnetwork/datastore"
@@ -14,6 +15,9 @@ import (
 )
 
 func registerNetworkDrivers(r driverapi.Registerer, cfg *config.Config, store *datastore.Store, pms *drvregistry.PortMappers) error {
+	if err := bridge.Register(r); err != nil {
+		return err
+	}
 	if err := host.Register(r); err != nil {
 		return err
 	}

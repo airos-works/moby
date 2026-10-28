@@ -100,6 +100,12 @@ func (daemon *Daemon) initNetworkController(cfg *config.Config, activeSandboxes 
 			return fmt.Errorf(`error creating default %q network: %v`, network.NetworkHost, err)
 		}
 	}
+	if n, _ := daemon.netController.NetworkByName(network.NetworkBridge); n == nil {
+		if _, err := daemon.netController.NewNetwork(ctx, "bridge", network.NetworkBridge, "",
+			libnetwork.NetworkOptionPersist(true)); err != nil {
+			return fmt.Errorf(`error creating default %q network: %v`, network.NetworkBridge, err)
+		}
+	}
 	return nil
 }
 

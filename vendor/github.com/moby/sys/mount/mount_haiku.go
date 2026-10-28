@@ -39,3 +39,10 @@ func Unmount(target string) error {
 func RecursiveUnmount(target string) error {
 	return Unmount(target)
 }
+
+// Mount is a no-op on Haiku: tmpfs/secret mounts are realized as plain
+// directories, and snapshot mounts are handled by the Engine's snapshotter
+// mounter (daemon/snapshotter).
+func Mount(device, target, mType, options string) error {
+	return nil
+}
