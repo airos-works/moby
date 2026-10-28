@@ -43,7 +43,8 @@ func getInodeFromStat(stat any) (uint64, error) {
 	if !ok {
 		return 0, fmt.Errorf("unexpected stat type %T", stat)
 	}
-	return s.Ino, nil
+	// Haiku ino_t is signed.
+	return uint64(s.Ino), nil
 }
 
 func getFileUIDGID(stat any) (int, int, error) {

@@ -18,7 +18,14 @@ monolithic.
 0. **CLI, packaging, GUI** — done in airos-works/docker and
    airos-works/docker-desktop. hpkgs ship in the rpi4, Cubie A7S and ROCK 5
    image package sets today.
-1. **Compile skeleton.** Make `cmd/dockerd` build for `haiku/amd64` +
+1. **Compile skeleton.** **DONE (2026-10-28).** `cmd/dockerd` builds for
+   `haiku/amd64` and `haiku/arm64` (`tools/build-haiku.sh`). libnetwork runs
+   with the null/host drivers only (bridge package is a stub; no netfilter),
+   the resolver's NAT setup is a no-op, osl sandboxes hold no resources, and
+   mount/xattr/containerd plumbing reports ENOSYS where Haiku has no
+   equivalent. The daemon requires a containerd binary to run; porting
+   containerd's content/image services (vfs snapshotter works without kernel
+   mounts) is the next step, followed by a QEMU smoke test. Make `cmd/dockerd` build for `haiku/amd64` +
    `haiku/arm64` behind a `haiku` build tag: stub `libnetwork`'s
    iptables/nftables backends with a no-op firewall (Haiku has no netfilter),
    select the `vfs` graphdriver (no overlayfs), and stub the cluster

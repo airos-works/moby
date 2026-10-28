@@ -1,4 +1,4 @@
-//go:build dragonfly || linux || openbsd || solaris
+//go:build dragonfly || linux || openbsd || solaris || haiku
 
 package fs
 

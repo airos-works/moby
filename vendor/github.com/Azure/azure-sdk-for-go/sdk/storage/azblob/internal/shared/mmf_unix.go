@@ -1,4 +1,4 @@
-//go:build go1.18 && (linux || darwin || dragonfly || freebsd || openbsd || netbsd || solaris || aix)
+//go:build go1.18 && (linux || darwin || dragonfly || freebsd || haiku || openbsd || netbsd || solaris || aix)
 // +build go1.18
 // +build linux darwin dragonfly freebsd openbsd netbsd solaris aix
 

@@ -1,4 +1,4 @@
-//go:build linux || freebsd || darwin || openbsd
+//go:build linux || freebsd || darwin || openbsd || haiku
 
 package layer
 

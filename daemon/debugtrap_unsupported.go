@@ -1,4 +1,4 @@
-//go:build !linux && !darwin && !freebsd && !windows
+//go:build !linux && !darwin && !freebsd && !windows && !haiku
 
 package daemon
 

@@ -81,7 +81,7 @@ func (i *ImageService) copyAndUnremapRootFS(ctx context.Context, dst, src []moun
 				if stat == nil {
 					return fmt.Errorf("cannot get underlying data for %s", path)
 				}
-				if _, ok := inos[stat.Ino]; ok {
+				if _, ok := inos[uint64(stat.Ino)]; ok {
 					// Inode already processed, skip
 					return nil
 				}
@@ -90,7 +90,7 @@ func (i *ImageService) copyAndUnremapRootFS(ctx context.Context, dst, src []moun
 				if err != nil {
 					return err
 				}
-				inos[stat.Ino] = struct{}{}
+				inos[uint64(stat.Ino)] = struct{}{}
 
 				return chownWithCaps(path, uid, gid)
 			})

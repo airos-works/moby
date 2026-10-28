@@ -1,4 +1,4 @@
-//go:build no_embedded_containerd
+//go:build no_embedded_containerd || haiku
 
 package command
 

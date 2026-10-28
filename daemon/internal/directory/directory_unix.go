@@ -1,4 +1,4 @@
-//go:build linux || freebsd || darwin
+//go:build linux || freebsd || darwin || haiku
 
 package directory
 

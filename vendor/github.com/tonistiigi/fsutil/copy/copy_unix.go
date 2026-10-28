@@ -1,4 +1,4 @@
-//go:build solaris || darwin || freebsd || openbsd || netbsd
+//go:build solaris || darwin || freebsd || openbsd || netbsd || haiku
 
 package fs
 
