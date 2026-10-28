@@ -127,7 +127,7 @@ func (m mounter) Mount(mounts []mount.Mount, containerID string) (string, error)
 		return "", err
 	}
 
-	return target, mount.All(mounts, target)
+	return target, applyMounts(mounts, target)
 }
 
 func (m mounter) Unmount(target string) error {

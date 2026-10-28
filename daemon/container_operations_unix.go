@@ -3,6 +3,7 @@
 package daemon
 
 import (
+	"runtime"
 	"context"
 	"fmt"
 	"os"
@@ -267,9 +268,14 @@ func (daemon *Daemon) setupIPCDirs(ctr *container.Container) error {
 				return err
 			}
 
-			shmproperty := "mode=1777,size=" + strconv.FormatInt(ctr.HostConfig.ShmSize, 10)
-			if err := unix.Mount("shm", shmPath, "tmpfs", uintptr(unix.MS_NOEXEC|unix.MS_NOSUID|unix.MS_NODEV), label.FormatMountLabel(shmproperty, ctr.GetMountLabel())); err != nil {
-				return fmt.Errorf("mounting shm tmpfs: %s", err)
+			if runtime.GOOS == "haiku" {
+				// Haiku has no tmpfs; a plain directory on BFS provides
+				// file-backed POSIX shm semantics for the container.
+			} else {
+				shmproperty := "mode=1777,size=" + strconv.FormatInt(ctr.HostConfig.ShmSize, 10)
+				if err := unix.Mount("shm", shmPath, "tmpfs", uintptr(unix.MS_NOEXEC|unix.MS_NOSUID|unix.MS_NODEV), label.FormatMountLabel(shmproperty, ctr.GetMountLabel())); err != nil {
+					return fmt.Errorf("mounting shm tmpfs: %s", err)
+				}
 			}
 			if err := os.Chown(shmPath, uid, gid); err != nil {
 				return err
