@@ -47,7 +47,17 @@ monolithic.
    executor. Deliverable: a `dockerd` that starts, binds
    `unix:///boot/system/cache/docker/docker.sock`, answers `/_ping`, and
    serves `docker version`/`docker info` from the air/OS CLI.
-2. **Images without containers.** Wire the registry client (pure Go; needs
+2. **Images without containers.**
+   BuildKit (buildx solves) status: the buildx plugin builds and runs, and
+   the bind-mount wall is solved (localmounter bind-alias). The remaining
+   blocker is below the port: buildx drives builds over a grpc *session*
+   to 127.0.0.1, and Haiku's TCP stack rejects parallel localhost dials
+   ("only one connection allowed" from addrConn.createTransport), so the
+   session healthcheck fails fatally and the build context snapshot is
+   garbage-collected mid-solve (gc error lstat snapshots/N). Needs Haiku
+   netstack work or a buildkit session transport that reuses one
+   connection. The legacy `docker build` builder is unaffected and is the
+   supported build path. Wire the registry client (pure Go; needs
    the go-haiku resolver verified against Haiku DNS) and image store on vfs:
    `docker pull`, `docker images`, `docker save/load`.
 3. **Container execution on Haiku primitives.** No namespaces exist, so v1
