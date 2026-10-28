@@ -45,7 +45,7 @@ monolithic.
    iptables/nftables backends with a no-op firewall (Haiku has no netfilter),
    select the `vfs` graphdriver (no overlayfs), and stub the cluster
    executor. Deliverable: a `dockerd` that starts, binds
-   `unix:///boot/system/cache/docker/docker.sock`, answers `/_ping`, and
+   `unix:///var/run/docker.sock`, answers `/_ping`, and
    serves `docker version`/`docker info` from the air/OS CLI.
 2. **Images without containers.**
    BuildKit (buildx solves) status: the buildx plugin builds and runs, and
