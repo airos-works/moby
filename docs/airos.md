@@ -28,8 +28,12 @@ monolithic.
    writable shared mappings; `mount.WithTempMount` treats single bind
    mounts as their source (Haiku has no bind syscall); containerd
    registers the native snapshotter + walking differ for haiku; the
-   toolchain gained `UtimesNanoAt` (utimensat). `docker run` stops at the
-   container rootfs mount — the stage-3 boundary (chroot-based runtime). `cmd/dockerd` builds for
+   toolchain gained `UtimesNanoAt` (utimensat). `docker run` progressed through rootfs preparation (symlink-emulated
+   bind mounts), OCI spec creation and containerd container creation,
+   and now stops at the shim boundary: `containerd-shim-runc-v2` is not
+   installed. Stage 3 is a haiku shim (ttrpc TaskService + chroot exec)
+   plus persistence-friendly restarts (proper SIGTERM shutdown releases
+   the bolt flock; kill -9 orphans hold it). `cmd/dockerd` builds for
    `haiku/amd64` and `haiku/arm64` (`tools/build-haiku.sh`). libnetwork runs
    with the null/host drivers only (bridge package is a stub; no netfilter),
    the resolver's NAT setup is a no-op, osl sandboxes hold no resources, and
