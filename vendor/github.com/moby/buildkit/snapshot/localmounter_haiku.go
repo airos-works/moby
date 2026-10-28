@@ -26,6 +26,13 @@ func (lm *localMounter) Mount() (string, error) {
 		lm.release = release
 	}
 
+	// Haiku has no bind mounts: a single bind mount aliases its source, so
+	// operate on the source directly instead of mounting.
+	if !lm.forceRemount && len(lm.mounts) == 1 && lm.mounts[0].Type == "bind" {
+		lm.target = lm.mounts[0].Source
+		return lm.target, nil
+	}
+
 	if !lm.forceRemount && len(lm.mounts) == 1 && lm.mounts[0].Type == "nullfs" {
 		ro := slices.Contains(lm.mounts[0].Options, "ro")
 		if !ro {
