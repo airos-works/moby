@@ -110,11 +110,11 @@ var errNotImplemented = errors.New("not implemented on haiku")
 func (daemon *Daemon) cleanupMountsByID(id string) error { return nil }
 
 func (daemon *Daemon) conditionalMountOnStart(container *container.Container) error {
-	return nil
+	return daemon.Mount(container)
 }
 
 func (daemon *Daemon) conditionalUnmountOnCleanup(container *container.Container) error {
-	return nil
+	return daemon.Unmount(container)
 }
 
 func getPluginExecRoot(cfg *config.Config) string { return cfg.ExecRoot }
