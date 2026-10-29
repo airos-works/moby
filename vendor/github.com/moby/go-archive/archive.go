@@ -620,7 +620,7 @@ func createTarFile(root *os.Root, dstPath string, hdr *tar.Header, reader io.Rea
 		}
 
 	case tar.TypeLink:
-		if err := root.Link(hardlinkTarget, dstPath); err != nil {
+		if err := rootLink(root, hardlinkTarget, dstPath); err != nil {
 			return err
 		}
 
