@@ -1,4 +1,4 @@
-//go:build linux || windows
+//go:build linux || windows || haiku
 
 package service
 
