@@ -45,6 +45,8 @@ func (daemon *Daemon) createSpec(ctx context.Context, daemonCfg *configStore, c 
 		coci.WithHostname(c.Config.Hostname),
 		coci.WithDomainname(c.Config.Domainname),
 		func(_ context.Context, _ coci.Client, _ *containers.Container, s *specs.Spec) error {
+			// The haiku shim gives the process a pty when this is set.
+			s.Process.Terminal = c.Config.Tty
 			if c.Config.Tty && len(c.HostConfig.ConsoleSize) == 2 {
 				s.Process.ConsoleSize = &specs.Box{
 					Height: c.HostConfig.ConsoleSize[0],
