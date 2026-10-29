@@ -20,8 +20,12 @@ func (ld *layerDescriptor) open(ctx context.Context) (distribution.ReadSeekClose
 }
 
 func filterManifests(manifests []manifestlist.ManifestDescriptor, p ocispec.Platform) []manifestlist.ManifestDescriptor {
+	requested := p.OS != ""
 	p = platforms.Normalize(withDefault(p))
 	m := platforms.Only(p)
+	if !requested {
+		m = platform.HostMatcher(p)
+	}
 	var matches []manifestlist.ManifestDescriptor
 	for _, desc := range manifests {
 		descP := toOCIPlatform(desc.Platform)

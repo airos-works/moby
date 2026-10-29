@@ -64,9 +64,10 @@ func (i *ImageService) matchRequestedOrDefault(
 	}
 }
 
-// hostPlatformMatcher returns a platform match comparer that matches the host platform.
+// hostPlatformMatcher returns a platform match comparer that matches the host platform
+// (and, on haiku, the linux platform of the host's architecture after it).
 func (i *ImageService) hostPlatformMatcher() platforms.MatchComparer {
-	return platforms.Only(i.hostPlatformSpec())
+	return platform.HostMatcher(i.hostPlatformSpec())
 }
 
 // hostPlatformSpec returns the host platform specification.

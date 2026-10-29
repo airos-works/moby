@@ -105,10 +105,15 @@ func (i *ImageService) pullTag(ctx context.Context, ref reference.Named, platfor
 	ctx = remotes.WithMediaTypeKeyPrefix(ctx, policyimage.ArtifactTypeSigstoreBundle, "sigstore-bundle")
 
 	pullPlatform := i.hostPlatformSpec()
+	p := i.hostPlatformMatcher()
 	if platform != nil {
 		pullPlatform = *platform
+		p = platforms.Only(pullPlatform)
 	}
-	opts := []containerd.RemoteOpt{containerd.WithPlatform(platforms.FormatAll(pullPlatform))}
+	opts := []containerd.RemoteOpt{
+		containerd.WithPlatform(platforms.FormatAll(pullPlatform)),
+		containerd.WithPlatformMatcher(p),
+	}
 
 	resolver, _ := i.newResolverFromAuthConfig(ctx, authConfig, ref, metaHeaders)
 	opts = append(opts, containerd.WithResolver(resolver))
@@ -138,8 +143,6 @@ func (i *ImageService) pullTag(ctx context.Context, ref reference.Named, platfor
 			}
 		}()
 	}
-
-	p := platforms.Only(pullPlatform)
 
 	pullJobs := newJobs()
 	opts = append(opts, containerd.WithImageHandler(c8dimages.HandlerFunc(func(ctx context.Context, desc ocispec.Descriptor) ([]ocispec.Descriptor, error) {
