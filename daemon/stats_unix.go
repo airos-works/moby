@@ -7,7 +7,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"os"
 	"runtime"
 	"strconv"
 	"strings"
@@ -301,18 +300,6 @@ const (
 	clockTicksPerSecond  = 100
 	nanoSecondsPerSecond = 1e9
 )
-
-// getSystemCPUUsage reads the system's CPU usage from /proc/stat and returns
-// the total CPU usage in nanoseconds and the number of CPUs.
-func getSystemCPUUsage() (cpuUsage uint64, cpuNum uint32, _ error) {
-	f, err := os.Open("/proc/stat")
-	if err != nil {
-		return 0, 0, err
-	}
-	defer f.Close()
-
-	return readSystemCPUUsage(f)
-}
 
 // readSystemCPUUsage parses CPU usage information from a reader providing
 // /proc/stat format data. It returns the total CPU usage in nanoseconds
