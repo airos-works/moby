@@ -69,6 +69,29 @@ monolithic.
 4. **Ecosystem.** build via BuildKit (or a v1 builder fallback), volumes on
    BFS attributes, structured logs, compose plugin.
 
+## Engine fixes (2026-10-30, QEMU x86_64 hrev59866)
+
+- **Pulls:** with no `--platform`, a haiku host matches haiku images first and
+  then the linux images of its architecture (`platform.HostMatcher`, used by
+  the containerd image service and the graphdriver puller), as containerd's
+  default matcher does for freebsd. An explicit `--platform` stays strict.
+- **Volumes:** the `local` driver is registered on haiku. Volumes are plain
+  directories under the data root (`daemon/volume/local/local_haiku.go`);
+  driver options (`type`, `device`, `o`, `size`) are refused, since Haiku's
+  `mount.Mount` is a no-op and has no quotas. The haiku shim links them into
+  containers (airos-works/containerd).
+- **Terminals:** `createSpec` sets `Process.Terminal` from `Config.Tty`, so
+  `docker run -t` gets the shim's pty (`docker exec -t` already passed it).
+- **Stats:** the system CPU usage is the wall time since the daemon started
+  times the CPU count (there is no `/proc/stat`), which is what the CPU
+  percentage needs; the shim reports the container's usage.
+- **docker top:** Haiku's `ps` has no Linux options or PID column, so
+  `ContainerTop` (`daemon/top_haiku.go`) runs it with its defaults and keeps
+  the container's teams (the shim reports the whole tree), titled UID, GID,
+  PID, THREADS and CMD; `ps` arguments other than the default are refused.
+- **Hard links:** layer and archive extraction copy a file when BFS refuses a
+  hard link (vendored `containerd/v2/pkg/archive` and `moby/go-archive`).
+
 ## Toolchain prerequisites already in place
 
 - gen2brain/go Haiku port (go-haiku) with air/OS additions:
