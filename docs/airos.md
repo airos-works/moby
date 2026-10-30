@@ -65,7 +65,9 @@ monolithic.
    process supervision via teams/wait4, `setrlimit` resource caps, and
    userland networking (loopback TCP proxies per published port). This is a
    documented, honest subset — containers see each other's processes, which
-   is called out in `docker info`'s security options.
+   is called out in `docker info`'s security options. Containers from
+   **Linux images** do not use it: they run in the Linux VM (below), with
+   Linux's namespaces.
 4. **Ecosystem.** build via BuildKit (or a v1 builder fallback), volumes on
    BFS attributes, structured logs, compose plugin.
 
@@ -102,3 +104,33 @@ monolithic.
 - `containerd` and `runc` get the same treatment as the CLI once stage 3
   begins; there is no 32-bit-arm Haiku Go target, but all air/OS boards
   (x86_64, rpi4/ARM64, Cubie A7S/ARM64, ROCK 5/ARM64) are covered.
+
+## Linux images run in the Linux VM (2026-10-30)
+
+A container whose image is a Linux one (`ImagePlatform.OS == "linux"`) runs
+in air/OS's Linux VM (the `linuxvm` package, airos-works/linuxvm; the
+haiku shim, `containerd-linuxvm` and its agent in airos-works/containerd).
+The Engine's part (`daemon/oci_linuxvm_haiku.go`):
+
+- **Spec:** the Linux section of the default spec stays (namespaces,
+  mounts, masked and read-only paths, devices); Docker's capabilities with
+  `--cap-add`/`--cap-drop`/`--privileged` (`caps` knows the VM kernel's
+  capabilities on haiku), the resources (`--memory`, `--cpus`,
+  `--cpu-shares`, `--cpuset-cpus`, `--pids-limit`; also `docker update`,
+  `update_haiku.go`), ulimits, `--read-only`, `--tmpfs`, `--shm-size`,
+  sysctls, and PATH, HOSTNAME and TERM as Docker sets them on Linux.
+- **Annotations** for what the VM resolves: `works.airos.platform=linux`,
+  the image's or the run's USER (resolved against the container's
+  `/etc/passwd`; `docker exec -u` passes it the same way), the networks
+  with the container's DNS names and aliases on each (Compose service
+  names), the published ports (free host ports chosen for `-P` and empty
+  host ports, recorded in the container's port map for `docker ps` and
+  `docker port`), `--privileged`, and the Engine's data root (the VM caches
+  what is under it).
+- **docker top** reads the VM's `ps` through `containerd-linuxvm`'s socket
+  and keeps the container's processes.
+- **Signals:** `moby/sys/signal` has Haiku's signal table (vendored, as in
+  airos-works/docker), so `docker kill -s USR1` and images' stop signals
+  parse; the shim translates the numbers to Linux's.
+- No "platform does not match" warning for Linux images of the host's
+  architecture.

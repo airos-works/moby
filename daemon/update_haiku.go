@@ -3,7 +3,6 @@
 package daemon
 
 import (
-	"errors"
 	"reflect"
 
 	containertypes "github.com/moby/moby/api/types/container"
@@ -11,11 +10,11 @@ import (
 )
 
 // toContainerdResources converts container resources to the containerd
-// shape; resource limits are enforced with setrlimit in the Haiku runtime,
-// so this currently carries no Linux cgroup data.
+// shape: the cgroup limits of a container in the Linux VM. A Haiku
+// container's shim ignores them.
 func toContainerdResources(resources containertypes.Resources) (*libcontainerdtypes.Resources, error) {
 	if reflect.ValueOf(resources).IsZero() {
 		return nil, nil
 	}
-	return nil, errors.New("updating container resources is not supported on haiku yet")
+	return linuxVMResources(resources), nil
 }

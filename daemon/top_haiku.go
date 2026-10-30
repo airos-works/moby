@@ -3,9 +3,12 @@ package daemon
 import (
 	"bytes"
 	"context"
+	"io"
+	"net"
 	"os/exec"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/moby/moby/api/types/container"
 	"github.com/moby/moby/api/types/events"
@@ -52,6 +55,15 @@ func (daemon *Daemon) ContainerTop(name string, psArgs string) (*container.TopRe
 	procs := make(map[int]bool, len(infos))
 	for _, p := range infos {
 		procs[int(p.Pid)] = true
+	}
+
+	if isLinuxVMContainer(ctr) {
+		procList, err := linuxVMTop(procs)
+		if err != nil {
+			return nil, errdefs.System(err)
+		}
+		daemon.LogContainerEvent(ctr, events.ActionTop)
+		return procList, nil
 	}
 
 	output, err := exec.Command("ps").Output()
@@ -114,4 +126,45 @@ func fieldsASCII(s string) []string {
 		}
 		return false
 	})
+}
+
+// linuxVMSocket is containerd-linuxvm's socket (containerd's pkg/linuxvm).
+const linuxVMSocket = "/var/run/containerd-linuxvm.sock"
+
+// linuxVMTop lists a Linux container's processes from the VM's ps: procs
+// are its pids in the VM, as the shim reports them.
+func linuxVMTop(procs map[int]bool) (*container.TopResponse, error) {
+	c, err := net.DialTimeout("unix", linuxVMSocket, 5*time.Second)
+	if err != nil {
+		return nil, errors.Wrap(err, "the Linux VM")
+	}
+	defer c.Close()
+	_ = c.SetDeadline(time.Now().Add(30 * time.Second))
+	if _, err := io.WriteString(c, "ps\n"); err != nil {
+		return nil, err
+	}
+	output, err := io.ReadAll(c)
+	if err != nil {
+		return nil, err
+	}
+	status, output, _ := bytes.Cut(output, []byte{'\n'})
+	if string(status) != "ok" {
+		return nil, errors.Errorf("the Linux VM: %s", status)
+	}
+	// PID USER PPID STAT TIME COMMAND
+	procList := &container.TopResponse{Titles: []string{"UID", "PID", "PPID", "STAT", "TIME", "CMD"}}
+	for _, line := range strings.Split(string(output), "\n")[1:] {
+		fields := fieldsASCII(line)
+		if len(fields) < 6 {
+			continue
+		}
+		pid, err := strconv.Atoi(fields[0])
+		if err != nil || !procs[pid] {
+			continue
+		}
+		procList.Processes = append(procList.Processes, []string{
+			fields[1], fields[0], fields[2], fields[3], fields[4], strings.Join(fields[5:], " "),
+		})
+	}
+	return procList, nil
 }

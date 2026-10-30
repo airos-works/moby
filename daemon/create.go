@@ -106,7 +106,9 @@ func (daemon *Daemon) containerCreate(ctx context.Context, daemonCfg *configStor
 				Variant:      img.Variant,
 			}
 
-			if !images.OnlyPlatformWithFallback(p).Match(imgPlat) {
+			// On air/OS a Linux image of the host's architecture runs in
+			// the Linux VM (HostMatcher), so it is no mismatch.
+			if !images.OnlyPlatformWithFallback(p).Match(imgPlat) && !platform.HostMatcher(p).Match(imgPlat) {
 				warnings = append(warnings, fmt.Sprintf("The requested image's platform (%s) does not match the detected host platform (%s) and no specific platform was requested", platforms.FormatAll(imgPlat), platforms.FormatAll(p)))
 			}
 		}

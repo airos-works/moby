@@ -1,5 +1,5 @@
-//go:build !linux && !darwin && !freebsd && !windows
-// +build !linux,!darwin,!freebsd,!windows
+//go:build !linux && !darwin && !freebsd && !windows && !haiku
+// +build !linux,!darwin,!freebsd,!windows,!haiku
 
 package signal
 

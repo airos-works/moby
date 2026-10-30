@@ -11,6 +11,11 @@ import (
 )
 
 func (daemon *Daemon) execSetPlatformOpt(ctx context.Context, daemonCfg *config.Config, ec *container.ExecConfig, p *specs.Process) error {
+	if isLinuxVMContainer(ec.Container) && ec.User != "" {
+		// The Linux VM's agent resolves it against the container's
+		// /etc/passwd and /etc/group.
+		p.User = specs.User{Username: ec.User}
+	}
 	return nil
 }
 

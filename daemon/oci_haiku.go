@@ -24,8 +24,12 @@ import (
 // the mount table.
 func (daemon *Daemon) createSpec(ctx context.Context, daemonCfg *configStore, c *container.Container, mounts []container.Mount) (retSpec *specs.Spec, _ error) {
 	s := mobyoci.DefaultSpec()
-	// DefaultSpec targets Linux; the haiku runtime has no Linux section.
-	s.Linux = nil
+	linuxVM := isLinuxVMContainer(c)
+	if !linuxVM {
+		// DefaultSpec targets Linux; the haiku runtime has no Linux section.
+		// A Linux image keeps it: it runs in the Linux VM.
+		s.Linux = nil
+	}
 
 	var args []string
 	if ep := c.Config.Entrypoint; len(ep) > 0 {
@@ -38,9 +42,14 @@ func (daemon *Daemon) createSpec(ctx context.Context, daemonCfg *configStore, c 
 		cwd = "/"
 	}
 
+	env := c.Config.Env
+	if linuxVM {
+		// PATH, HOSTNAME and TERM as Docker sets them on Linux
+		env = c.CreateDaemonEnvironment(c.Config.Tty, nil)
+	}
 	opts := []coci.SpecOpts{
 		coci.WithProcessArgs(args...),
-		coci.WithEnv(c.Config.Env),
+		coci.WithEnv(env),
 		coci.WithProcessCwd(cwd),
 		coci.WithHostname(c.Config.Hostname),
 		coci.WithDomainname(c.Config.Domainname),
@@ -66,9 +75,10 @@ func (daemon *Daemon) createSpec(ctx context.Context, daemonCfg *configStore, c 
 		opts = append(opts, coci.WithRootFSPath(c.BaseFS))
 	}
 
-	// User: numeric uid/gid is all the haiku runtime supports for now.
+	// User: numeric uid/gid is all the haiku runtime supports for now. The
+	// Linux VM's agent resolves names against the image's /etc/passwd.
 	var user specs.User
-	if c.Config.User != "" {
+	if c.Config.User != "" && !linuxVM {
 		parts := strings.SplitN(c.Config.User, ":", 2)
 		if uid, err := strconv.Atoi(parts[0]); err == nil {
 			user.UID = uint32(uid)
@@ -91,6 +101,9 @@ func (daemon *Daemon) createSpec(ctx context.Context, daemonCfg *configStore, c 
 			if m.Source == "" {
 				continue
 			}
+			if _, ok := c.HostConfig.Tmpfs[m.Destination]; ok && linuxVM {
+				continue // a tmpfs in the Linux VM (withLinuxVM)
+			}
 			spec := specs.Mount{
 				Destination: path.Clean(m.Destination),
 				Type:        "bind",
@@ -108,6 +121,10 @@ func (daemon *Daemon) createSpec(ctx context.Context, daemonCfg *configStore, c 
 		}
 		return nil
 	})
+
+	if linuxVM {
+		opts = append(opts, daemon.withLinuxVM(c))
+	}
 
 	if err := coci.ApplyOpts(ctx, daemon.containerdClient, &containers.Container{
 		ID:          c.ID,
